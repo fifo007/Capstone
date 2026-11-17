@@ -1,0 +1,31 @@
+#-----------------------------------------------------------
+# xsim v2024.1 (64-bit)
+# SW Build 5076996 on Wed May 22 18:37:14 MDT 2024
+# IP Build 5075265 on Wed May 22 21:45:21 MDT 2024
+# SharedData Build 5076995 on Wed May 22 18:29:18 MDT 2024
+# Start of session at: Mon Nov 16 19:03:08 2026
+# Process ID: 13864
+# Current directory: C:/Users/sagni/OneDrive/Documents/capstone/hardware/simulation
+# Command line: xsim.exe -mode tcl -source {xsim.dir/pulse_counter_tb_sim/xsim_script.tcl}
+# Log file: C:/Users/sagni/OneDrive/Documents/capstone/hardware/simulation/xsim.log
+# Journal file: C:/Users/sagni/OneDrive/Documents/capstone/hardware/simulation\xsim.jou
+# Running On        :fifo
+# Platform          :Windows Server 2016 or Windows 10
+# Operating System  :26200
+# Processor Detail  :AMD Ryzen 5 5625U with Radeon Graphics         
+# CPU Frequency     :2296 MHz
+# CPU Physical cores:6
+# CPU Logical cores :12
+# Host memory       :16475 MB
+# Swap memory       :16475 MB
+# Total Virtual     :32951 MB
+# Available Virtual :19513 MB
+#-----------------------------------------------------------
+source xsim.dir/pulse_counter_tb_sim/xsim_script.tcl
+# xsim {pulse_counter_tb_sim} -autoloadwcfg -runall
+Time resolution is 1 ps
+run -all
+PASS: pulse_counter_tb
+$finish called at time : 2486 ns : File "C:/Users/sagni/OneDrive/Documents/capstone/hardware/testbench/pulse_counter_tb.v" Line 129
+exit
+INFO: [Common 17-206] Exiting xsim at Mon Nov 16 19:03:12 2026...

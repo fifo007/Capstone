@@ -1,0 +1,33 @@
+
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+.env
+
+# Vivado generated files
+.Xil/
+*.runs/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+*.gen/
+
+# Temporary simulation output
+hardware/simulation/xsim.dir/
+hardware/simulation/.Xil/
+hardware/simulation/*.jou
+hardware/simulation/*.wdb
+hardware/simulation/*.pb
+hardware/simulation/*.out
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Exclude intermediate Vivado diagnostic logs
+hardware/simulation/*console.log
+hardware/simulation/gcc_launch_diagnostic.log
+hardware/simulation/vivado_setup.log

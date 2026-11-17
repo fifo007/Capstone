@@ -1,0 +1,4 @@
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "C:/Users/sagni/OneDrive/Documents/capstone/hardware/rtl/pulse_counter.v" into library work
+INFO: [VRFC 10-311] analyzing module pulse_counter
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "C:/Users/sagni/OneDrive/Documents/capstone/hardware/rtl/pynq_z2_pulse_wrapper.v" into library work
+INFO: [VRFC 10-311] analyzing module pynq_z2_pulse_wrapper
