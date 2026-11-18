@@ -1,157 +1,106 @@
-# BioWire 🧠⚡
+# BioWire connectome model and saved experiments
 
-> **Biologically constrained spiking neural network simulation of the *Drosophila melanogaster* optic lobe, built from the FlyWire electron-microscopy connectome.**
+BioWire is the repository's existing Brian2 spiking-network research track. Its notebook builds a Drosophila optic-lobe/left-medulla (ME_L) network from FlyWire cell-type and synaptic-connection tables, simulates circuit responses, and compares model outputs with selected biological/electrophysiological references. It is a research model and historical software work; it is not the future hardware event model and does not currently process timestamped FPGA pulses.
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
-[![Brian2](https://img.shields.io/badge/simulator-Brian2-green)](https://brian2.readthedocs.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-brightgreen)](CHANGELOG.md)
+## Contents
 
----
+- `biowire_v1_.ipynb` — primary notebook, with executed/saved outputs and the staged connectome/network workflow.
+- `environment.yml` and `requirements.txt` — Conda and pip dependency specifications.
+- `consolidated_cell_types.csv.gz` — FlyWire cell-type table; present in this checkout as a regular Git file.
+- `connections_princeton_no_threshold.csv.gz` — large FlyWire synapse table tracked by Git LFS.
+- `EXP53_*`, `EXP54_*`, `EXP55_*`, `EXP56*` — saved experiment inputs, results and figures. These are historical outputs; opening the notebook does not rerun them.
+- `fly_adc_lut.mem` — saved 101-entry, two-digit hexadecimal code table produced from the corrected EXP-56B reference. The generator `../lut.py` is machine-path-specific and overwrites this file if run.
+- `.ipynb_checkpoints/` and any extra notebook figures — editor/generated artifacts, not separate source workflows.
 
-## Overview
+The repository root also has an older `biowire_v1_.ipynb` snapshot. Use this directory's notebook for the documented BioWire workflow.
 
-BioWire simulates the **left medulla (ME_L)** of the *Drosophila* optic lobe using a conductance-based leaky integrate-and-fire (LIF) network driven by real connectome data from [codex.flywire.ai](https://codex.flywire.ai).
+## Data requirements and Git LFS
 
-### Key Features
+The notebook's initial data-loading cells look for both files in the notebook's current working directory and require columns including:
 
-- **FlyWire connectome integration** — real synapse counts from codex.flywire.ai
-- **Offline / mock mode** — synthetic connectome auto-generated when data files are absent
-- **E/I classification** — 30+ neurotransmitter-typed inhibitory types (DOI-cited)
-- **4-bit signed weight quantisation** — memory-efficient sparse matrices
-- **Parameter optimisation** — grid search calibrated to in-vivo electrophysiology
-- **Three-layer negative control** — rewired / shuffled / random topology comparison
+- Cell types: `root_id`, `primary_type`.
+- Connections: `pre_root_id`, `post_root_id`, `syn_count`, `neuropil`.
 
----
+The maintained notebook cell can generate a synthetic mock connectome when either table is absent. Mock mode is for an offline demonstration and must not be described as a real FlyWire result. Some later analysis/audit cells assume real data and may not work in mock mode.
 
-## Pipeline
+### Clone and fetch the tracked large table (PowerShell)
 
-| Step | Description |
-|------|-------------|
-| 1 | Install dependencies & write `environment.yml` |
-| 2 | Load FlyWire connectome (or generate mock) |
-| 3 | Extract ME_L circuit, build weight matrices |
-| 4 | E/I classification + 4-bit weight quantisation |
-| 5 | Network topology analysis |
-| 6 | Visualise signed weight matrices |
-| 7 | Define conductance-based LIF model (Brian2) |
-| 8 | Core 8-type circuit simulation |
-| 9 | Full 100-type + mid-tier 20-type simulation |
-| 10 | Stimulus–response visualisation + directional tuning |
-| 11 | Electrophysiology comparison (sim vs. in-vivo) |
-| 12 | Three-layer negative control (Hamming distance) |
+Install Git LFS once, then clone/fetch:
 
----
+```powershell
+git lfs install
+git clone https://github.com/fifo007/Capstone.git
+Set-Location .\Capstone
+git lfs pull
+git lfs ls-files
+Get-Item .\biowire\connections_princeton_no_threshold.csv.gz, .\biowire\consolidated_cell_types.csv.gz | Select-Object Name,Length
+```
 
-## Quick Start
+If the repository is already cloned, run `git lfs install` and `git lfs pull` from its root. The connections table is the LFS object. If LFS access is unavailable, download the correctly versioned tables from [FlyWire downloads](https://codex.flywire.ai/api/download) and put them beside this README/notebook as `biowire/consolidated_cell_types.csv.gz` and `biowire/connections_princeton_no_threshold.csv.gz`. Keep the compressed filenames unchanged and do not commit replacement datasets without reviewing provenance/licensing/size.
 
-### Option A — Conda (recommended)
+Linux equivalent:
 
 ```bash
-conda env create -f environment.yml
+git lfs install
+git lfs pull
+ls -lh biowire/connections_princeton_no_threshold.csv.gz biowire/consolidated_cell_types.csv.gz
+```
+
+## Environment setup
+
+### Conda (recommended for this notebook)
+
+From the repository root:
+
+```powershell
+conda env create -f .\biowire\environment.yml
 conda activate biowire
-jupyter notebook biowire_v1_.ipynb
+python -m pip install jupyter
 ```
 
-### Option B — pip
+The checked-in environment file includes Python 3.10, NumPy, pandas, Matplotlib, NetworkX, SciPy and Brian2. It does not list Jupyter, so install it in the environment as shown above. If the environment already exists, use `conda env update -f .\biowire\environment.yml --prune` only if you intend to update that environment; otherwise activate it and install Jupyter.
 
-```bash
-pip install -r requirements.txt
-jupyter notebook biowire_v1_.ipynb
+### pip/venv alternative
+
+From the repository root:
+
+```powershell
+py -3.10 -m venv .\biowire\.venv
+.\biowire\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r .\biowire\requirements.txt
+python -m pip install jupyter
 ```
 
-> **Note:** Python 3.10+ is required.
+The maintained requirements file lists NumPy, pandas, Matplotlib, NetworkX, SciPy and Brian2. Use Python 3.10 or a compatible later version; the Conda environment explicitly uses Python 3.10.
 
----
+## Launch and run the notebook
 
-## Data
+In PowerShell, with the `biowire` environment activated:
 
-The notebook runs in **two modes**:
+```powershell
+Set-Location .\biowire
+jupyter lab .\biowire_v1_.ipynb
+```
 
-| Mode | Behaviour |
-|------|-----------|
-| **Real data** | Download the two files below and place them in the project root |
-| **Offline / mock** | If files are absent, a synthetic connectome is auto-generated |
+Or use `jupyter notebook .\biowire_v1_.ipynb`. Keep `biowire/` as the notebook working directory: the initial pipeline uses relative CSV names and saves figures/results relative to the current directory. In Jupyter, restart the kernel and execute cells in notebook order when intentionally reproducing the pipeline. The full-connectome simulation is computationally intensive and can require substantial memory/time.
 
-Files to download from [codex.flywire.ai/api/download](https://codex.flywire.ai/api/download):
+**Portability and preservation notes:** later data-audit/experiment cells contain absolute paths into the original author's `C:\Users\sagni\OneDrive\Documents\capstone\biowire` location. A clone in a different folder may fail in those cells. Notebook cells also write result CSVs and figures with names matching saved artifacts, so running them can replace files. Review the cell paths and work on a disposable copy before executing the full notebook; do not use Run All as a way to inspect the saved results.
 
-- `consolidated_cell_types.csv.gz`
-- `connections_princeton_no_threshold.csv.gz`
+The initial notebook loader's mock fallback does not mean the entire notebook can reproduce every saved experiment without the real data. Confirm the notebook's printed mode and table shapes before interpreting any output.
 
-These files are excluded from the repository via `.gitignore` due to their size.
+## Notebook workflow and saved experiment outputs
 
----
+The notebook's main documented sequence is: load connectome → extract ME_L → classify excitatory/inhibitory types and quantize weights → inspect topology/weight plots → configure conductance-based LIF dynamics → run core 8-type and larger 20/100-type circuit simulations → stimulus/directional tuning analysis → electrophysiology comparison → randomized-topology negative controls. Saved baseline figures include topology, signed weights, voltage traces, stimulus results, electrophysiology comparison and negative-control plots.
 
-## Model Architecture
+Later notebook work produced the following files in this directory. These are already-saved artifacts and should not be regenerated just to read them:
 
-| Component | Implementation |
-|-----------|----------------|
-| Connectome source | FlyWire ME_L (Dorkenwald et al. 2024) |
-| Weight format | scipy.sparse CSR → 4-bit signed integer |
-| Simulator | Brian2, conductance-based LIF, dt = 0.5 ms |
-| E/I classification | 30+ inhibitory types (DOI-cited) |
-| Parameter search | Grid search calibrated to in-vivo ephys |
-| Negative control | Degree-preserving rewire · weight shuffle · random |
-| Visualisation | Dark-background matplotlib, 6 figures |
+| Experiment | Purpose | Saved outputs currently present |
+|---|---|---|
+| EXP-53 | Fly-inspired ADC processing of a real-video-derived motion/voltage signal; includes a decoder correction using the frozen EXP-33 configuration. | `EXP53_real_video_motion_signal.csv`, `EXP53_real_video_fly_adc_results.csv`, `EXP53_real_video_fly_adc_reconstruction.png`, `EXP53_real_video_fly_adc_error.png`, `EXP53_real_video_fly_adc_transfer.png`, `EXP53_real_video_fly_adc_code_occupancy.png`. |
+| EXP-54 | Saved real-video Fly-vs-SNN comparison. | `EXP54_real_video_fly_vs_snn.csv`, `EXP54_real_video_code_occupancy.png`, `EXP54_real_video_error_comparison.png`, `EXP54_real_video_transfer_comparison.png`, and `EXP54_real_video_fly_vs_snn.png`. |
+| EXP-55 | Noise robustness/code agreement analysis. | `EXP55_noise_robustness_samples.csv`, `EXP55_noise_robustness_summary.csv`, and the `EXP55_noise_*.png` figures for agreement, coverage, MAE, RMSE and SNR. |
+| EXP-56A | Saved transfer characterization. | `EXP56A_transfer_characterization.csv` and `EXP56A_transfer_characterization.png`. |
+| EXP-56B | Code transitions and transfer-curve work; the corrected decoder CSV remains the historical reference. | `EXP56B_code_transitions.csv`, `EXP56B_transfer_curve.csv`, `EXP56B_EXP49_decoder.csv`, and `fly_adc_lut.mem`. |
 
-### Neuron Models
-
-Three circuit tiers are simulated:
-
-| Model | Neuron types | Purpose |
-|-------|-------------|---------|
-| Core | 8 | Canonical motion circuit (L1, L2, L3, L5, Mi1, Mi4, C3, Tm1) |
-| Mid | 20 | Extended medulla coverage |
-| Full | 100 | Full ME_L representation |
-
----
-
-## Simulation Results (v1.0.0)
-
-Results obtained with the real FlyWire connectome, random seed = 42:
-
-| Metric | Value |
-|--------|-------|
-| Neuron types modelled | 100 (ME_L) |
-| Synaptic edges | 308 |
-| Calibration (ephys target) | **5 / 8 neurons in range** |
-| Grid search best score | 14.80 |
-| Best params | G_on=0.33, G_off=0.15, W_scale=0.06 |
-| DSI (ON-only vs OFF-only) | 1.00 |
-| Null stimulus silence | ✅ confirmed |
-| Negative control (Random Hamming) | 0.003 ± 0.004, p = 0.057 (n.s.) |
-
----
-
-## E/I Classification
-
-Inhibitory types are sourced from:
-
-| Neurotransmitter | Neurons | Reference |
-|-----------------|---------|-----------|
-| GABA | C2, C3, Mi9, Dm1–Dm14, Am, Pm1/2, Lai, aMe12 | Takemura et al. 2017; Eckstein et al. 2024 |
-| Glutamate (inh.) | L4, Tm4, Tm9, Tm20, TmY4/5a/10, Lawf1/2 | Shinomiya et al. 2019 |
-| Acetylcholine | L1, L2, L3, L5, Mi1, Mi4, T4*, T5*, R* | Excitatory (default) |
-
----
-
-## References
-
-- Clark et al. (2011). *Defining the computational structure of the motion detector in Drosophila.* Neuron. [doi:10.1016/j.neuron.2011.06.004](https://doi.org/10.1016/j.neuron.2011.06.004)
-- Takemura et al. (2017). *Connectome of the fly visual circuitry.* eLife. [doi:10.7554/eLife.24394](https://doi.org/10.7554/eLife.24394)
-- Strother et al. (2017). *The emergence of directional selectivity in the visual motion pathway of Drosophila.* Neuron. [doi:10.1016/j.neuron.2017.07.025](https://doi.org/10.1016/j.neuron.2017.07.025)
-- Shinomiya et al. (2019). *Comparisons between the ON- and OFF-edge motion pathways in the Drosophila visual system.* eLife. [doi:10.7554/eLife.37833](https://doi.org/10.7554/eLife.37833)
-- Maisak et al. (2013). *A directional tuning map of Drosophila elementary motion detectors.* Nature. [doi:10.1038/nature12320](https://doi.org/10.1038/nature12320)
-- Eckstein et al. (2024). *Neurotransmitter classification from electron microscopy images at synaptic sites in Drosophila.* Nature. [doi:10.1038/s41586-024-07558-y](https://doi.org/10.1038/s41586-024-07558-y)
-- Dorkenwald et al. (2024). *FlyWire: online community for whole-brain connectomics.* Nature Methods. [doi:10.1038/s41592-024-02237-2](https://doi.org/10.1038/s41592-024-02237-2)
-- Nern et al. (2015). *Quantitative neuroanatomy for connectomics in Drosophila.* eLife. [doi:10.7554/eLife.04693](https://doi.org/10.7554/eLife.04693)
-
----
-
-## Author
-
-Erdem B.
-
-## License
-
-MIT License — see [LICENSE](LICENSE) for details.
+The values in these files are saved research results, not proof of physical ADC measurements. Do not rerun experiments or overwrite the corrected `EXP56B_EXP49_decoder.csv` when only inspecting the repository. For the project-wide status and the relationship to future pulse-driven work, see [Project architecture](../docs/PROJECT_ARCHITECTURE.md) and the root [README](../README.md).
