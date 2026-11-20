@@ -1,5 +1,7 @@
 # Vivado 2024.1 setup: PYNQ-Z2 pulse counter
 
+> **This is the optional hardware-project workflow, not the way to run the pulse-counter testbench.** To simulate the counter without a board or VFC circuit, follow [`../simulation/README.md`](../simulation/README.md) and run `& .\hardware\simulation\run_xsim.bat` from the repository root. This guide covers creating a Vivado GUI project and proposed PS/PL clock/reset integration. It does not connect an external pulse source, assign package pins, generate a bitstream, or validate hardware.
+
 This guide describes setup of the pulse-counter wrapper only. The wrapper and counter have not been validated on a board. This path has no AXI interface or XDC pin assignments. A separate timestamp-FIFO/AXI-Lite module has a passing XSim testbench but remains unintegrated development RTL and is not covered by this guide. There are no LM331 connections or deployment steps.
 
 ## Board support and target
@@ -33,8 +35,9 @@ This gives the counter's synchronous, active-high reset a clock-synchronized sou
 
 ## Create and configure the project
 
-1. In Vivado 2024.1, create a new RTL project and select **PYNQ-Z2** from the Boards list. Confirm the target part is `xc7z020clg400-1`.
-2. Add these design sources:
+1. Install the PYNQ-Z2 board definition as described above, then start/restart Vivado 2024.1. Select **Create Project** → **Next**, enter a project name and location, and continue through the wizard.
+2. Select **RTL Project**. Leave **Do not specify sources at this time** unchecked if adding sources in the wizard, or add them in the next step after project creation. Select **PYNQ-Z2** from the Boards list. Confirm the target part is `xc7z020clg400-1`.
+3. Add these design sources:
 
    ```text
    hardware/rtl/pulse_counter.v
@@ -42,11 +45,11 @@ This gives the counter's synchronous, active-high reset a clock-synchronized sou
    ```
 
    Keep `pulse_counter` unchanged. The wrapper instantiates it and exposes a simple clock, reset, asynchronous pulse input, captured count, and snapshot strobe.
-3. Create a Block Design and add **Zynq7 Processing System**. Run Block Automation and apply the **PYNQ-Z2** board preset. Check that the expected DDR and fixed-IO PS interfaces are enabled by the preset. Enable `FCLK_CLK0`, then confirm it is 100 MHz after automation.
-4. Add the Processor System Reset IP and configure/connect it as described above.
-5. Add `pynq_z2_pulse_wrapper` to the block design as a **Module Reference**. Connect `FCLK_CLK0` to `fclk_clk0`, the synchronized active-high reset to `reset`, and make `pulse_in_gpio_async` an external block-design port. Do not assign it to a package pin.
-6. Keep `snapshot_count` and `snapshot_valid` as visible wrapper outputs. They are not software-readable through the PS in this design because AXI is intentionally not included.
-7. Validate the Block Design and run RTL elaboration/synthesis as needed. This is an implementation setup guide, not a report of synthesis, bitstream generation, programming, or hardware validation.
+4. Create a Block Design and add **Zynq7 Processing System**. Run Block Automation and apply the **PYNQ-Z2** board preset. Check that the expected DDR and fixed-IO PS interfaces are enabled by the preset. Enable `FCLK_CLK0`, then confirm it is 100 MHz after automation.
+5. Add the Processor System Reset IP and configure/connect it as described above.
+6. Add `pynq_z2_pulse_wrapper` to the block design as a **Module Reference**. Connect `FCLK_CLK0` to `fclk_clk0`, the synchronized active-high reset to `reset`, and make `pulse_in_gpio_async` an external block-design port. Do not assign it to a package pin.
+7. Keep `snapshot_count` and `snapshot_valid` as visible wrapper outputs. They are not software-readable through the PS in this design because AXI is intentionally not included.
+8. Validate the Block Design and run RTL elaboration/synthesis as needed. This is an implementation setup guide, not a report of synthesis, bitstream generation, programming, or hardware validation.
 
 ## Electrical and pin-assignment hold point
 

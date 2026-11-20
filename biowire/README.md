@@ -76,6 +76,38 @@ The maintained requirements file lists NumPy, pandas, Matplotlib, NetworkX, SciP
 
 ## Launch and run the notebook
 
+### First run, step by step
+
+This is the existing BioWire research notebook workflow. It does not consume FPGA timestamps and does not require a VFC/LM331 or PYNQ-Z2 board. Its inputs are the two FlyWire tables. Notebook cells can write over saved experiment outputs, so first-time readers should inspect the saved outputs without executing cells; execute only when intentionally reproducing the analysis, preferably in a disposable copy.
+
+1. From the repository root, make sure Git LFS data is present:
+
+   ```powershell
+   git lfs install
+   git lfs pull
+   Get-Item .\biowire\consolidated_cell_types.csv.gz, .\biowire\connections_princeton_no_threshold.csv.gz | Select-Object Name,Length
+   ```
+
+2. Create the Conda environment and add Jupyter (one-time setup):
+
+   ```powershell
+   conda env create -f .\biowire\environment.yml
+   conda activate biowire
+   python -m pip install jupyter
+   ```
+
+   If the `biowire` environment already exists, activate it and install Jupyter; do not recreate it. The pip/venv alternative is below.
+3. Start Jupyter with `biowire` as the current working directory:
+
+   ```powershell
+   Set-Location .\biowire
+   jupyter lab .\biowire_v1_.ipynb
+   ```
+
+4. In the browser, open `biowire_v1_.ipynb`. To reproduce a run, use **Kernel → Restart Kernel and Run All Cells** only after reviewing the output-writing cells and machine-specific paths described below. Otherwise, read the saved notebook outputs without rerunning.
+
+The Conda steps are the supported sequential route from a clean checkout. The alternate launch command is `jupyter notebook .\biowire_v1_.ipynb`. Linux/macOS users activate the environment with `conda activate biowire`, then `cd biowire` and `jupyter lab biowire_v1_.ipynb`.
+
 In PowerShell, with the `biowire` environment activated:
 
 ```powershell

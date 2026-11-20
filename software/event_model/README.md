@@ -34,6 +34,26 @@ The two required inputs are `biowire/consolidated_cell_types.csv.gz` and the Git
 
 ## Hardware-free synthetic demonstration
 
+### First run, step by step
+
+This demonstration uses generated synthetic timestamps and the checked-in FlyWire tables. It does not need the VFC circuit, LM331, PYNQ-Z2 board, or hardware pulse input.
+
+1. Open PowerShell at the repository root.
+2. Create and activate a virtual environment (skip creation if using the already-created root `.venv`):
+
+   ```powershell
+   py -3.10 -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   python -m pip install --upgrade pip
+   python -m pip install -r software\event_model\requirements.txt
+   ```
+
+3. Fetch the large connectome table with `git lfs install` and `git lfs pull` as shown above. Confirm both `.csv.gz` files exist under `biowire\`.
+4. Run the CLI demo shown below. The command is run from the repository root so the package can be imported as `software.event_model`.
+5. Inspect the newly created files under `runs\event_model_demo\`; the run manifest records the synthetic assumptions and metrics.
+
+The individual modules (`events.py`, `connectome.py`, `network.py`, `decoder.py`, and `pipeline.py`) are imported by the package CLI; they are not intended to be launched individually.
+
 From the repository root:
 
 ```powershell
@@ -47,6 +67,8 @@ Outputs are `synthetic_events.csv`, `synthetic_windows.csv`, `connectome_model.n
 One recorded 64-sample run using the checked-in FlyWire tables, 100 types, 0.2 s windows, 50–400 Hz, `event_gain=1.0`, and `w_scale=0.5` reported 16 held-out samples, 0.00633 V MAE, 0.125 code-LSB MAE, 87.5% exact-code fraction, and a monotonic full-sweep prediction. L1 spiked in all 64 samples and Mi1 in 42. These are results on a synthetic linear mapping and synthetic periodic pulses; they do not validate the LM331 transfer function, analog accuracy, physical pulse timing, or hardware.
 
 ## Fit from labeled event windows
+
+The following command is a template for real, paired event/window CSV files that already exist at the named paths; those files are not generated automatically by the synthetic demo. Replace the paths with your measured files and verify their provenance before treating a result as measured calibration.
 
 The paired CSV format is written by `save_event_windows()` in `events.py`. Each metadata row needs a measured `input_voltage_v` label. For hardware calibration, use windows whose voltage labels were measured with an instrument and whose `synthetic` flag is false; preserve source/run details in `source` and in the hardware logs. The calibrator rejects windows marked synthetic by default and holds out entire voltage levels rather than randomly splitting repeated rows at the same voltage.
 
@@ -63,6 +85,8 @@ python -m software.event_model calibrate `
 Use `--allow-synthetic` only for an explicitly synthetic calibration. Synthetic and non-synthetic records cannot be mixed in one calibration run. A `synthetic=false` flag and a supplied voltage label do not independently prove that a measurement was taken: verify the electrical interface, label source, repeatability, FIFO overrun status, and model parameters. The decoder records a neutral `non-synthetic-labeled-event-windows` source label rather than claiming measurements were independently verified. Output includes `feature_decoder.json`, `calibration_results.csv`, and `run_manifest.json` with held-out metrics and provenance notes.
 
 ## Decode a stored event window
+
+This example works after the demo above has produced the CSV, NPZ, and decoder files. If using another dataset, substitute paths to compatible files and a `sample_id` that exists in the paired CSVs.
 
 Choose one `sample_id` present in the paired event/window CSVs and a decoder trained with compatible network settings:
 

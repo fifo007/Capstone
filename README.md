@@ -12,7 +12,7 @@ Current implementation status:
 - `biowire/` contains a Brian2/FlyWire connectome notebook and saved voltage-derived research outputs. It is separate from the event-model code and does not itself consume timestamped FPGA pulses.
 - The hardware counter testbench passed in the saved Vivado 2024.1 XSim run. The PYNQ-Z2 wrapper compiled with `xvlog` but has not had its own simulation testbench run.
 - A separate AXI-Lite timestamp FIFO RTL and its self-checking testbench are present. The testbench passes Vivado 2024.1 XSim, but the FIFO is not integrated into the counter wrapper or Vivado block design and has no physical validation.
-- `software/event_model/` now runs a hardware-free synthetic pulse → ME_L Brian2 network → held-out neural-feature decoder → 6-bit code workflow against the checked-in FlyWire tables. Its 26 software tests pass. A fresh 64-sample synthetic run achieved 0.125 LSB held-out MAE. This result is not a hardware or LM331 accuracy claim.
+- `software/event_model/` provides a hardware-free synthetic pulse → ME_L Brian2 network → held-out neural-feature decoder → 6-bit code workflow against the checked-in FlyWire tables. Its saved 26-test run passed. A recorded 64-sample synthetic run achieved 0.125 LSB held-out MAE. This result is not a hardware or LM331 accuracy claim.
 - No Vivado synthesis, board programming, physical pulse capture, LM331 connection, integrated PS/PL data path, or hardware validation has been completed.
 
 ## Repository structure
@@ -29,7 +29,7 @@ biowire_v1_.ipynb                 Existing top-level notebook snapshot
 Fly_Brain_ADC_EXP53_EXP54_artifacts.zip  Existing archive
 biowire/                          BioWire notebook, dependencies, data and saved results
 hardware/                         Counter RTL, XSim testbench and Vivado setup guide
-software/event_model/             Timestamped event types, connectome/network adapters and PYNQ MMIO reader (in progress)
+software/event_model/             Isolated event data, connectome/network model, decoder and CLI
 docs/                             Architecture, audit and hardware visit/log documents
 ```
 
@@ -148,11 +148,17 @@ The top-level `biowire_v1_.ipynb` is an existing older snapshot. Use the maintai
 
 ## Run the hardware simulation
 
-From repository-root PowerShell:
+**The pulse counter can be simulated without the VFC circuit, LM331, PYNQ-Z2, or any external wiring.** The testbench itself generates the clock, reset, and example input pulses. A `.v` RTL file is not a program to double-click or run by itself; run its testbench through the provided Vivado XSim script.
+
+Open PowerShell in the repository root (the directory containing this README), then run:
 
 ```powershell
 & .\hardware\simulation\run_xsim.bat
 ```
+
+Expected success text includes `PASS: pulse_counter_tb` and `PASS: Vivado XSim pulse-counter testbench completed successfully.` Logs and generated simulator files appear in `hardware\simulation\`. No Vivado GUI project needs to be created for this simulation. If Vivado is installed elsewhere, set `$env:VIVADO_SETTINGS` to its `settings64.bat` path for the current PowerShell session; detailed steps and troubleshooting are in [the XSim guide](hardware/simulation/README.md).
+
+This is the **simulation workflow**. Connecting a VFC circuit is a separate future physical-hardware task. Do not connect the LM331 output to PYNQ-Z2 until the interface circuit and electrical levels are verified. For a Vivado GUI project/block design, use [the PYNQ-Z2 project guide](hardware/vivado/README.md); board files and setup are required there, but that guide does not claim a board build or validation.
 
 The script initializes Vivado and runs `xvlog`, `xelab`, and `xsim`. It writes logs and generated simulator files into `hardware/simulation/`; success includes `PASS: pulse_counter_tb`. The latest saved XSim log has that pass marker. See [hardware simulation instructions](hardware/simulation/README.md) for direct commands, logs and troubleshooting. Icarus Verilog is not the supported project flow.
 

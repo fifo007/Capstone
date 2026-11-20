@@ -1,5 +1,7 @@
 # RTL modules
 
+These `.v` files describe hardware; they are not standalone applications. For a quick pulse-counter run, execute the self-checking testbench using [`../simulation/run_xsim.bat`](../simulation/run_xsim.bat) from PowerShell at the repository root. You do not need a VFC circuit or PYNQ-Z2 board: [`../testbench/pulse_counter_tb.v`](../testbench/pulse_counter_tb.v) creates simulated inputs. For the separate GUI project workflow, see [`../vivado/README.md`](../vivado/README.md).
+
 ## `pulse_counter.v`
 
 This synthesizable, board-independent pulse-window counter synchronizes an asynchronous input through two registers, detects rising edges, counts them, and publishes a stable snapshot at each measurement-window boundary. Reset is synchronous and active-high. The counter logic is unchanged by the PYNQ-Z2 wrapper work.
