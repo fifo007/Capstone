@@ -9,9 +9,10 @@ The long-term concept is: potentiometer voltage → LM331 voltage-to-frequency c
 Current implementation status:
 
 - The root Python scripts are independent software demonstrations/helpers; they do not consume physical board data.
-- `biowire/` contains a Brian2/FlyWire connectome notebook and saved voltage-derived research outputs. It is not the future timestamped-pulse model.
+- `biowire/` contains a Brian2/FlyWire connectome notebook and saved voltage-derived research outputs. It is separate from the event-model code and does not itself consume timestamped FPGA pulses.
 - The hardware counter testbench passed in the saved Vivado 2024.1 XSim run. The PYNQ-Z2 wrapper compiled with `xvlog` but has not had its own simulation testbench run.
-- No Vivado synthesis, board programming, physical pulse capture, LM331 connection, AXI-to-ARM data path, or hardware validation has been completed.
+- A separate AXI-Lite timestamp FIFO RTL, its testbench, and Python event-model modules are present as in-progress implementation. They are not integrated into the counter wrapper or Vivado block design. The latest recorded attempt to run the FIFO testbench did not complete because XSim failed while compiling generated C; no pass is claimed.
+- No Vivado synthesis, board programming, physical pulse capture, LM331 connection, integrated PS/PL data path, or hardware validation has been completed.
 
 ## Repository structure
 
@@ -27,7 +28,7 @@ biowire_v1_.ipynb                 Existing top-level notebook snapshot
 Fly_Brain_ADC_EXP53_EXP54_artifacts.zip  Existing archive
 biowire/                          BioWire notebook, dependencies, data and saved results
 hardware/                         Counter RTL, XSim testbench and Vivado setup guide
-software/event_model/             Documentation-only future-model placeholder
+software/event_model/             Timestamped event types, connectome/network adapters and PYNQ MMIO reader (in progress)
 docs/                             Architecture, audit and hardware visit/log documents
 ```
 
@@ -162,7 +163,11 @@ The script initializes Vivado and runs `xvlog`, `xelab`, and `xsim`. It writes l
 - **Matplotlib figures do not appear:** use an interactive Python session/GUI backend; on a headless system choose a supported noninteractive backend, noting that these scripts do not save the figures.
 - **`lut.py` says the CSV is missing:** its source path is hard-coded for the original checkout. Do not edit files to work around this without deliberately reviewing the implementation change; the script also overwrites the existing LUT.
 - **XSim `xelab` fails:** inspect `xelab_console.log` and `xelab.log` in `hardware/simulation/`, confirm the script's `VIVADO_SETTINGS` path and run from the `.bat`. Old GCC-launch diagnostics are historical; the latest saved counter run passed, but a new run must be judged by its own PASS marker.
-- **Expecting Python access to the count or hardware measurements:** neither AXI access nor a physical pulse input/constraint exists yet. The simulations do not validate electrical safety or board behavior.
+- **Expecting Python access to the counter:** the tested pulse-counter wrapper has no AXI path. A separate timestamp-FIFO/AXI-Lite module and reader exist as unintegrated, unverified development code; they are not a usable board interface yet. No physical pulse input/constraint exists. Simulation does not validate electrical safety or board behavior.
+
+## Event-model implementation status
+
+The event-model package is isolated under `software/event_model/`; it does not rewrite the BioWire notebook or historical EXP-56B outputs. It contains event-window data structures/CSV I/O, a connectome builder based on the notebook's ME_L type aggregation, a Brian2 network adapter, and a PYNQ MMIO reader for the separate timestamp-FIFO RTL. The reader depends on an integrated bitstream/register map and verified clock rate that are not yet available. Synthetic periodic events are only test/demo inputs; they are not an LM331 model or measured calibration. See [event-model notes](software/event_model/README.md).
 
 ## No hardware validation claim
 

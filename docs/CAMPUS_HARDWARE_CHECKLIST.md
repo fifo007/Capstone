@@ -1,6 +1,6 @@
 # Campus hardware visit checklist
 
-**Planned visit:** November 17, 2026. Update the date if the visit changes. This checklist is for inspection and staged verification. Do not connect an unknown signal to the PYNQ-Z2, do not flash or format the SD card, and do not connect the LM331 output directly.
+**Visit date:** ____________________. This checklist is for inspection and staged verification. Do not connect an unknown signal to the PYNQ-Z2, do not flash or format the SD card, and do not connect the LM331 output directly.
 
 Use the blank [Hardware Test Log](HARDWARE_TEST_LOG.md) and [Analog Calibration Log](ANALOG_CALIBRATION_LOG.md). Record observed facts, instrument IDs/settings and failures; leave unknowns marked unknown rather than guessing.
 
@@ -69,7 +69,7 @@ For every item, record whether it is present, its label/model/revision where app
 - [ ] With the source disconnected from the board, measure the source output's low/high levels, offset, overshoot, pulse width, duty cycle and frequency using the scope. Confirm its topology, current limit and behavior at the intended load. Record instrument and settings.
 - [ ] Verify common-ground plan with power off. Ensure the scope ground clip will not short a live/isolated node; use the lab's approved probing method. Do not connect a probe ground to an unknown reference.
 - [ ] Only after source, pin, I/O bank, voltage and grounding are reviewed as compatible, and after a reviewed constraint exists, connect the known safe logic-level source with the board powered off unless the lab procedure explicitly requires otherwise.
-- [ ] The wrapper currently exposes count/strobe as RTL outputs but has no AXI path. To observe those values, the lab design must include a reviewed method (for example, an ILA probe) or a later software interface. Do not assume PYNQ Python can read them yet.
+- [ ] The pulse-counter wrapper exposes count/strobe as RTL outputs but has no AXI path. A separate timestamp-FIFO/AXI-Lite module and Python reader are present as development files; they are not integrated into a Vivado block design, and the latest FIFO testbench attempt did not complete. Do not use them as a verified observation path. For the counter, use a reviewed method (for example, an ILA probe) or leave observation as a later step. Do not assume PYNQ Python can read the counter yet.
 - [ ] Apply a known frequency/window test plan. Record source frequency and level, configured FCLK0 and `WINDOW_CYCLES`, expected count per window, observed snapshot count/valid event and any discrepancy. A count expectation is only meaningful after clock, pulse width and measurement-window timing are known.
 
 ### 5. Observe and record pulse and count

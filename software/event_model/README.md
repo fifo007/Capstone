@@ -1,19 +1,33 @@
-# Future event-driven model (not implemented)
+# Event-driven model development area
 
-This directory is reserved for the software model intended to consume data from the future FPGA pulse-capture path. It currently contains documentation only: there is no Python module, dependency file, executable command, trained decoder or inference workflow here. Do not try to run this directory as a program.
+This package is an isolated implementation area for turning pulse events into Fly-inspired model features. It does not replace the BioWire notebook or alter saved experiments. The code is currently a development foundation: no end-to-end hardware-to-model run, calibrated LM331 mapping, or verified 6-bit output exists.
 
-## Intended role
+## Files and role
 
-The planned flow is ARM/PYNQ Python reads a measurement from PL, converts pulse counts/rates with a measured voltage-to-frequency calibration, runs a Fly-inspired event-based decoder, and produces a 6-bit result. The current PL counter only emits a count snapshot and one-cycle valid strobe. It does not timestamp each pulse, and no AXI/other PS-visible data path is implemented, so the model cannot receive hardware data yet.
+| File | Purpose |
+|---|---|
+| `events.py` | `EventWindow` representation, event CSV serialization, and deterministic periodic event generator for explicitly synthetic inputs. Timestamps are offsets in FPGA clock ticks. |
+| `connectome.py` | Rebuilds the ME_L type-level network from the repository's FlyWire cell-type and connection tables, using the BioWire notebook's type selection, quantization, and inhibitory row signs. |
+| `network.py` | Brian2 adapter for injecting event trains into the selected network input and collecting readout features. It uses an explicit event-gain/configuration; those parameters are not physical calibration values. |
+| `pynq_reader.py` | MMIO reader for the register map defined by `hardware/rtl/pulse_event_fifo_axi.v`. PYNQ is imported only when creating an MMIO object from a loaded overlay. |
 
-The existing BioWire notebook and corrected EXP-56B decoder are voltage-derived research and historical software results. They may inform future model design, but neither is an implemented timestamped-pulse model. Keep future source, tests, dependencies and outputs isolated here rather than rewriting the BioWire notebook or saved experiments.
+The ME_L source network has no `R1-6` node. The current adapter therefore uses `L1` as its input boundary. This is a modeling choice and does not claim that L1 represents the complete photoreceptor pathway.
 
-## Decisions required before implementation
+## Dependencies and data
 
-1. Specify the PS/PL interface and data contract (for example, count plus window duration, rate estimate, or timestamps); no choice is implemented.
-2. Characterize the LM331 voltage/frequency relation and electrical interface using actual measurements. Do not treat a synthetic mapping as calibration.
-3. Define whether the output should represent average window voltage or a time-resolved value, plus latency and update-rate requirements.
-4. Select a runtime/dependency set compatible with the actual ARM/PYNQ image and decide how the 6-bit output is delivered.
-5. Create synthetic unit tests first, clearly label their assumptions, then compare with measured calibration and hardware observations when available.
+The modules require Python 3.10+, NumPy, pandas, Brian2; `connectome.py` also reads the two BioWire CSV.GZ files, and `pynq_reader.py` needs the `pynq` package only on the target PYNQ system. There is not yet a dedicated requirements file, CLI, or supported end-to-end run command. Install/reuse the BioWire environment for host-side development, and confirm package compatibility against the actual PYNQ image before deployment.
 
-See the root [project architecture](../../docs/PROJECT_ARCHITECTURE.md), [hardware README](../../hardware/README.md) and [hardware visit checklist](../../docs/CAMPUS_HARDWARE_CHECKLIST.md) for current system boundaries. There is no setup or run command until implementation and dependencies exist.
+From the repository root, first ensure Git LFS data is populated:
+
+```powershell
+git lfs pull
+Get-Item .\biowire\connections_princeton_no_threshold.csv.gz, .\biowire\consolidated_cell_types.csv.gz
+```
+
+The event-window generator can create synthetic periodic event data, but it is not an LM331 model. Do not treat a chosen frequency, voltage label, or event-gain value as measured calibration.
+
+## Hardware reader boundary
+
+`PynqPulseEventReader` expects a loaded PYNQ overlay with an IP instance whose MMIO register map matches the in-progress FIFO RTL. Pass the verified FCLK0 tick rate explicitly. The reader rejects capture data when the FIFO overrun flag is set. The RTL and Python reader have not been validated together on a bitstream or board; the FIFO testbench's latest recorded XSim attempt failed during generated-C compilation. There are no pin assignments, safe LM331 interface, overlay, or deployment instructions at this stage.
+
+See the [project architecture](../../docs/PROJECT_ARCHITECTURE.md), [hardware guide](../../hardware/README.md), and [campus hardware checklist](../../docs/CAMPUS_HARDWARE_CHECKLIST.md) for system status and safety boundaries.
