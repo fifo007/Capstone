@@ -13,3 +13,13 @@ Expected successful output contains `PASS: pulse_counter_tb`, followed by `PASS:
 Vivado 2024.1 is installed at `C:\Xilinx\Vivado\2024.1`. The latest saved run completed `xvlog`, `xelab`, and `xsim`; `xsim_console.log` ends with `PASS: pulse_counter_tb` and `$finish`. The self-checking counter testbench passed in simulation. Earlier failed xelab diagnostic logs remain in this directory as historical diagnostics; they do not describe the latest run. Simulation does not establish board timing, electrical safety, pin assignments, or hardware behavior.
 
 The PYNQ-Z2 wrapper is not included in this self-checking testbench. It was separately parsed by `xvlog`; that is not wrapper simulation or synthesis. Its Vivado block-design integration is described in `../vivado/README.md`.
+
+## Timestamp FIFO testbench
+
+The separate AXI-Lite timestamp FIFO source and testbench are run with:
+
+```powershell
+& .\hardware\simulation\run_event_fifo_xsim.bat
+```
+
+This runner stores its own Vivado environment record, compiler path, compile/elaborate/simulate logs, and generated files under `hardware/simulation/event_fifo_run/`, preserving the pulse-counter run above. It invokes `xelab -v 2` to record the C compiler command. Latest observed status: `xvlog` succeeded, but `xelab` failed with `The system cannot execute the specified program` when launching the bundled Vivado 2024.1 GCC at `C:\Xilinx\Vivado\2024.1\tps\mingw\6.2.0\win64.o\nt\bin\gcc.exe`; XSim did not run and no FIFO PASS is claimed. This is the previously diagnosed toolchain launch issue; do not infer an RTL pass from successful parsing/elaboration messages.

@@ -1,0 +1,7 @@
+numpy==1.25.2
+pandas==2.3.0
+brian2==2.9.0
+pytest>=8.0
+
+# The `pynq` package is supplied by the target PYNQ image and is only needed
+# for physical MMIO access through PynqPulseEventReader.from_overlay().

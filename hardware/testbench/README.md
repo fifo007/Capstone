@@ -21,3 +21,7 @@ Set-Location ..\..
 ```
 
 The latest saved Vivado 2024.1 XSim run completed and reported `PASS: pulse_counter_tb`. This confirms the self-checks ran in simulation; it does not validate the wrapper, board timing, electrical levels, pin assignments, or physical hardware. See [`../simulation/README.md`](../simulation/README.md) for the saved logs and status.
+
+## Timestamp FIFO testbench
+
+`pulse_event_fifo_axi_tb.v` checks the FIFO's version register, both AW-before-W and W-before-AW AXI-Lite writes, reads, timestamp ordering, full-FIFO overflow indication, write-one-to-clear behavior, FIFO draining, and reset clearing. Run it with `& .\hardware\simulation\run_event_fifo_xsim.bat` from the repository root. Its current XSim attempt does not pass: `xvlog` succeeds but `xelab` cannot launch the bundled Vivado GCC. See [`../simulation/README.md`](../simulation/README.md). This testbench remains unverified until the toolchain issue is resolved and the script prints its PASS marker.

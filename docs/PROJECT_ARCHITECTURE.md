@@ -15,9 +15,9 @@ PYNQ-Z2 programmable logic (PL): synchronise → timestamp/FIFO (development pat
         │ AXI-Lite register stream (RTL present, not integrated or validated)
         ▼
 Zynq ARM Processing System (PS): PYNQ Linux + Python application
-        │ timestamped event windows (reader/model modules in progress)
+        │ timestamped event windows (software pipeline implemented; hardware interface pending)
         ▼
-Future Fly-inspired event-driven model
+Fly-inspired event-driven model (hardware-free simulation runs; board input pending)
         │ 6-bit code
         ▼
 Future digital output interface (method and connector not selected)
@@ -33,7 +33,7 @@ The `0–1 V` potentiometer span is the intended experiment input range, not a c
 | LM331 voltage-to-frequency converter | Encode the analog input as a pulse frequency. Calibration should relate measured voltage and pulse frequency. | Circuit and output topology have not been verified. |
 | PYNQ-Z2 PL | Synchronize/count pulses per window in the original counter; a separate development module captures pulse timestamps into an AXI-Lite FIFO. | Counter testbench passed in XSim. Wrapper compiled with `xvlog`. The timestamp FIFO and testbench are present but the most recent XSim attempt failed during generated C compilation. Neither design is integrated into a Vivado block design, synthesized, or physically tested. |
 | Zynq ARM PS | Run Linux/PYNQ Python and read PL event records through a defined memory-mapped interface. | A Python MMIO reader is present, but no integrated overlay/bitstream or board boot/version check is available. It has not been validated against physical PL hardware. |
-| Fly-inspired event model | Consume timestamped pulse windows through a ME_L network adapter and eventually produce a 6-bit result. | Isolated Python implementation is in progress. The input boundary is L1 because the ME_L source network has no R1-6 node. No measured LM331 calibration or hardware-driven result exists. |
+| Fly-inspired event model | Consume timestamped pulse windows through a ME_L network adapter and produce a 6-bit result. | A hardware-free synthetic pipeline is implemented and runs against the saved FlyWire tables. Its 26 software tests pass. A fresh 64-sample synthetic sweep reported 0.125 LSB held-out MAE. The input boundary is L1 because the ME_L source network has no R1-6 node. No measured LM331 calibration or hardware-driven result exists. |
 | 6-bit output | Present the model's output to a selected downstream system. | Output electrical/protocol interface is undecided and unimplemented. |
 
 The original `pulse_counter` measures synchronized rising edges per window; it does **not** timestamp each pulse. The separate `pulse_event_fifo_axi` module is a development implementation of a timestamp FIFO and AXI-Lite register interface, but it is not connected to `pynq_z2_pulse_wrapper` or a PS block design and its testbench has no recorded pass. The Python reader reflects that register map but has not been validated on a board. Treat this path as unverified development work, not a usable hardware interface.
@@ -65,7 +65,7 @@ The existing BioWire notebook, saved decoder and EXP-56B data are voltage-derive
 | `hardware/testbench/pulse_counter_tb.v` | Self-checking counter testbench for reset, zero/multiple pulses, boundary cases and valid-strobe behavior. |
 | `hardware/simulation/` | Vivado XSim batch runner, saved pass logs, generated XSim files and older diagnostic logs. |
 | `hardware/vivado/README.md` | Vivado setup guidance for the PYNQ-Z2 board, PS clock/reset and wrapper integration. |
-| `software/event_model/` | In-progress event-window CSV types, ME_L connectome builder, Brian2 network adapter, and PYNQ MMIO reader; no validated hardware-to-model run or final 6-bit output flow. |
+| `software/event_model/` | Implemented hardware-free event-window CSV types, ME_L connectome builder, Brian2 network adapter, neural-feature decoder, calibration/inference CLI, and PYNQ MMIO reader. Hardware-to-model integration and a final physical 6-bit output interface remain unvalidated. |
 | `hardware/rtl/pulse_event_fifo_axi.v` | Separate timestamp FIFO/AXI-Lite development module; not integrated with the pulse-counter wrapper and not simulation-verified. |
 | `hardware/testbench/pulse_event_fifo_axi_tb.v` | Self-checking testbench source for the timestamp FIFO; most recent XSim attempt failed during generated C compilation, so no pass is claimed. |
 | `docs/codex_audit.md` | Earlier repository reconnaissance record. It is historical and predates the hardware implementation. |
@@ -88,7 +88,7 @@ The repository also contains Python cache material and Git metadata; neither is 
 | Synthesis / implementation / bitstream | Not performed. |
 | Physical pulse capture / LM331 | Not performed; no signal connection authorized by this design note. |
 | Timestamp FIFO / AXI-Lite module | RTL and testbench source present; testbench did not complete in the latest recorded attempt; no block-design integration. |
-| Software event model / MMIO reader | In-progress isolated modules; not yet run as an integrated hardware workflow. |
+| Software event model / MMIO reader | Hardware-free synthetic demo, labeled-window calibration path, stored-window inference path, compact connectome bundle, and MMIO reader are implemented. All 26 software tests pass, and the full synthetic demo and synthetic-only calibration CLI passed again during this work. The MMIO reader has not been tested against a real overlay. |
 | Six-bit output | Not implemented; electrical/protocol interface undecided. |
 
 ## Open decisions and blockers
@@ -99,8 +99,21 @@ The repository also contains Python cache material and Git metadata; neither is 
 4. What are the LM331 circuit's output stage, pull-up rail/value, high/low voltages, pulse width/duty range, frequency range and shared-ground arrangement under load?
 5. Which board connector/bank can safely receive the verified signal, and what constraints and interface conditioning does it require? No pin is selected here.
 6. How will the PL snapshot reach ARM software (AXI-Lite register, stream/FIFO, or another reviewed route)?
-7. Should the model consume counts per fixed window, estimated frequency, or timestamped pulse events? What latency and time resolution are required?
+7. Does the model's 0.5 ms integration step resolve the measured LM331 event rates, and what latency/time resolution does the application require?
 8. How will the final 6-bit value be presented, and what hardware/electrical protocol does that downstream device require?
 9. What calibration method, voltage sweep, repeat count and validation split should be used before comparing hardware-driven results with the saved BioWire work?
 
 No board-specific pin assignment, integrated AXI block design, analog interface design, or hardware validation is provided in this document. The separate AXI-Lite FIFO source is unverified development code and is not approved for deployment.
+
+## Ordered next steps
+
+1. **Identify and boot the lab board.** Record the exact PYNQ-Z2 model/revision, inspect the SD card without modifying it, power with the identified supply, and record boot/PYNQ version. This depends on the physical board and image being available.
+2. **Confirm Vivado board support and start the project.** Install/select only the official matching PYNQ-Z2 board files and confirm `xc7z020clg400-1`. This depends on access to the Vivado installation used in the lab and the board's identity.
+3. **Configure PS clock and reset.** Apply the PYNQ-Z2 PS preset, enable FCLK_CLK0, record its actual configured frequency, and wire the synchronized reset. The proposed 100 MHz must be confirmed in Vivado.
+4. **Integrate the pulse-counter wrapper.** Add the existing counter and wrapper without changing counter logic. At this stage the wrapper outputs are not readable by PYNQ software; keep pins unconstrained until a safe interface and observation method are selected.
+5. **Design and verify the PS access path.** Select and review an AXI/register or FIFO design, simulate it successfully, then integrate it with the PS. The current timestamp FIFO RTL has no passing XSim run and is not yet ready for block-design or board use.
+6. **Verify pulse capture with a known safe source.** First inspect the exact connector/bank and measure pulse levels, width, frequency, grounding and overshoot while disconnected from the board. This depends on scope/multimeter observations and reviewed constraints; no pins are selected in this repository.
+7. **Characterize and integrate the LM331.** Measure output topology and voltage/frequency behavior over the potentiometer range, review an interface circuit, and only then plan a board connection. This depends on the actual LM331 schematic and bench measurements.
+8. **Connect the event model.** Feed measured timestamped windows into the existing model, calibrate with labeled measurements, validate on held-out data, and decide how to expose the six-bit code. This depends on a verified PS/PL interface and measured/calibrated events.
+
+The directory `software/event_model/` is already present. A board-specific constraints directory, integrated Vivado block-design project, and physical deployment artifacts have not been created; their contents depend on the board and interface checks above.

@@ -4,6 +4,12 @@
 
 Use the blank [Hardware Test Log](HARDWARE_TEST_LOG.md) and [Analog Calibration Log](ANALOG_CALIBRATION_LOG.md). Record observed facts, instrument IDs/settings and failures; leave unknowns marked unknown rather than guessing.
 
+## First three things to do at the lab
+
+1. Photograph the board and labels, then write down the exact model and PCB revision. Inspect connectors for damage before applying power.
+2. Identify the SD card, power supply and cable labels. Leave the card untouched and keep every external signal disconnected from the board.
+3. Power the board using the confirmed supply, observe boot behavior, and record whether PYNQ/Linux is accessible and its version. If it does not boot, record the evidence; do not flash or format the card.
+
 ## A. Hardware inventory
 
 For every item, record whether it is present, its label/model/revision where applicable, condition, and any relevant settings. Photograph labels and wiring before changing anything.

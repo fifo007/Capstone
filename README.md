@@ -4,7 +4,7 @@ Fly Brain ADC is a research and prototyping repository for a fly-inspired 6-bit 
 
 ## Intended architecture and current status
 
-The long-term concept is: potentiometer voltage → LM331 voltage-to-frequency conversion → PYNQ-Z2 programmable-logic (PL) pulse capture → ARM Processing System (PS) software → future event-driven model → 6-bit code. See [Project architecture](docs/PROJECT_ARCHITECTURE.md) for the data flow, repository map and open decisions.
+The target path is: potentiometer voltage → LM331 voltage-to-frequency conversion → PYNQ-Z2 programmable-logic (PL) pulse capture → ARM Processing System (PS) software → isolated Fly-inspired event model → 6-bit code. The hardware/software interface is still unintegrated. See [Project architecture](docs/PROJECT_ARCHITECTURE.md) for the data flow, repository map and open decisions.
 
 Current implementation status:
 
@@ -12,6 +12,7 @@ Current implementation status:
 - `biowire/` contains a Brian2/FlyWire connectome notebook and saved voltage-derived research outputs. It is separate from the event-model code and does not itself consume timestamped FPGA pulses.
 - The hardware counter testbench passed in the saved Vivado 2024.1 XSim run. The PYNQ-Z2 wrapper compiled with `xvlog` but has not had its own simulation testbench run.
 - A separate AXI-Lite timestamp FIFO RTL, its testbench, and Python event-model modules are present as in-progress implementation. They are not integrated into the counter wrapper or Vivado block design. The latest recorded attempt to run the FIFO testbench did not complete because XSim failed while compiling generated C; no pass is claimed.
+- `software/event_model/` now runs a hardware-free synthetic pulse → ME_L Brian2 network → held-out neural-feature decoder → 6-bit code workflow against the checked-in FlyWire tables. Its 26 software tests pass. A fresh 64-sample synthetic run achieved 0.125 LSB held-out MAE. This result is not a hardware or LM331 accuracy claim.
 - No Vivado synthesis, board programming, physical pulse capture, LM331 connection, integrated PS/PL data path, or hardware validation has been completed.
 
 ## Repository structure
@@ -154,6 +155,18 @@ From repository-root PowerShell:
 ```
 
 The script initializes Vivado and runs `xvlog`, `xelab`, and `xsim`. It writes logs and generated simulator files into `hardware/simulation/`; success includes `PASS: pulse_counter_tb`. The latest saved XSim log has that pass marker. See [hardware simulation instructions](hardware/simulation/README.md) for direct commands, logs and troubleshooting. Icarus Verilog is not the supported project flow.
+
+The separate timestamp-FIFO testbench has its own runner, `& .\hardware\simulation\run_event_fifo_xsim.bat`; its build output is isolated under `hardware/simulation/event_fifo_run/`. The latest run compiled with `xvlog` but `xelab` could not launch Vivado's bundled GCC (`The system cannot execute the specified program`), so this testbench has **not passed**.
+
+## Run the pulse-driven software demo
+
+Install the isolated dependencies as described in [software/event_model](software/event_model/README.md), retrieve the Git LFS connectome table, and run from the repository root:
+
+```powershell
+python -m software.event_model demo --data-dir biowire --output-dir runs/event_model_demo
+```
+
+This is a hardware-free synthetic sweep using a documented linear voltage-to-frequency assumption. It exercises timestamped-event input, the ME_L Brian2 network, a held-out neural-feature decoder, and a 6-bit code. It also writes a compact, source-hashed `connectome_model.npz` for later inference without loading the large raw CSVs. It does not use or validate the LM331. The same README documents `calibrate` for labeled event windows and `infer` for a stored sample. Run software unit tests with `python -m pytest software\event_model\tests -q`.
 
 ## Troubleshooting
 
