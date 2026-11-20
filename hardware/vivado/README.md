@@ -1,6 +1,6 @@
 # Vivado 2024.1 setup: PYNQ-Z2 pulse counter
 
-This guide describes setup of the pulse-counter wrapper only. The wrapper and counter have not been validated on a board. This path has no AXI interface or XDC pin assignments. A separate timestamp-FIFO/AXI-Lite module exists as unintegrated development RTL; it has no recorded passing simulation and is not covered by this guide. There are no LM331 connections or deployment steps.
+This guide describes setup of the pulse-counter wrapper only. The wrapper and counter have not been validated on a board. This path has no AXI interface or XDC pin assignments. A separate timestamp-FIFO/AXI-Lite module has a passing XSim testbench but remains unintegrated development RTL and is not covered by this guide. There are no LM331 connections or deployment steps.
 
 ## Board support and target
 

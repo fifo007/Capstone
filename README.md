@@ -11,7 +11,7 @@ Current implementation status:
 - The root Python scripts are independent software demonstrations/helpers; they do not consume physical board data.
 - `biowire/` contains a Brian2/FlyWire connectome notebook and saved voltage-derived research outputs. It is separate from the event-model code and does not itself consume timestamped FPGA pulses.
 - The hardware counter testbench passed in the saved Vivado 2024.1 XSim run. The PYNQ-Z2 wrapper compiled with `xvlog` but has not had its own simulation testbench run.
-- A separate AXI-Lite timestamp FIFO RTL, its testbench, and Python event-model modules are present as in-progress implementation. They are not integrated into the counter wrapper or Vivado block design. The latest recorded attempt to run the FIFO testbench did not complete because XSim failed while compiling generated C; no pass is claimed.
+- A separate AXI-Lite timestamp FIFO RTL and its self-checking testbench are present. The testbench passes Vivado 2024.1 XSim, but the FIFO is not integrated into the counter wrapper or Vivado block design and has no physical validation.
 - `software/event_model/` now runs a hardware-free synthetic pulse → ME_L Brian2 network → held-out neural-feature decoder → 6-bit code workflow against the checked-in FlyWire tables. Its 26 software tests pass. A fresh 64-sample synthetic run achieved 0.125 LSB held-out MAE. This result is not a hardware or LM331 accuracy claim.
 - No Vivado synthesis, board programming, physical pulse capture, LM331 connection, integrated PS/PL data path, or hardware validation has been completed.
 
@@ -156,7 +156,7 @@ From repository-root PowerShell:
 
 The script initializes Vivado and runs `xvlog`, `xelab`, and `xsim`. It writes logs and generated simulator files into `hardware/simulation/`; success includes `PASS: pulse_counter_tb`. The latest saved XSim log has that pass marker. See [hardware simulation instructions](hardware/simulation/README.md) for direct commands, logs and troubleshooting. Icarus Verilog is not the supported project flow.
 
-The separate timestamp-FIFO testbench has its own runner, `& .\hardware\simulation\run_event_fifo_xsim.bat`; its build output is isolated under `hardware/simulation/event_fifo_run/`. The latest run compiled with `xvlog` but `xelab` could not launch Vivado's bundled GCC (`The system cannot execute the specified program`), so this testbench has **not passed**.
+The separate timestamp-FIFO testbench has its own runner, `& .\hardware\simulation\run_event_fifo_xsim.bat`; its build output is isolated under `hardware/simulation/event_fifo_run/`. The latest Vivado 2024.1 XSim run passed with `PASS: pulse_event_fifo_axi_tb`. The AXI FIFO remains unintegrated and has not been validated on a board.
 
 ## Run the pulse-driven software demo
 
@@ -176,7 +176,7 @@ This is a hardware-free synthetic sweep using a documented linear voltage-to-fre
 - **Matplotlib figures do not appear:** use an interactive Python session/GUI backend; on a headless system choose a supported noninteractive backend, noting that these scripts do not save the figures.
 - **`lut.py` says the CSV is missing:** its source path is hard-coded for the original checkout. Do not edit files to work around this without deliberately reviewing the implementation change; the script also overwrites the existing LUT.
 - **XSim `xelab` fails:** inspect `xelab_console.log` and `xelab.log` in `hardware/simulation/`, confirm the script's `VIVADO_SETTINGS` path and run from the `.bat`. Old GCC-launch diagnostics are historical; the latest saved counter run passed, but a new run must be judged by its own PASS marker.
-- **Expecting Python access to the counter:** the tested pulse-counter wrapper has no AXI path. A separate timestamp-FIFO/AXI-Lite module and reader exist as unintegrated, unverified development code; they are not a usable board interface yet. No physical pulse input/constraint exists. Simulation does not validate electrical safety or board behavior.
+- **Expecting Python access to the counter:** the tested pulse-counter wrapper has no AXI path. The separate timestamp-FIFO/AXI-Lite module and reader pass software/RTL simulation checks but are not integrated in a Vivado PS block design or validated on a board, so they are not yet a usable physical interface. No physical pulse input/constraint exists. Simulation does not validate electrical safety or board behavior.
 
 ## Event-model implementation status
 

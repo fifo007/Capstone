@@ -1,6 +1,6 @@
 # FPGA pulse-counter foundation
 
-This directory contains the synthesizable pulse-window counter, its self-checking testbench, and a thin PYNQ-Z2 wrapper. Separate timestamp-FIFO/AXI-Lite RTL and a testbench are also present as unverified development work; they are not integrated with the wrapper or a Zynq PS block design. There are no board pin constraints. The pulse input is not electrically verified; keep the LM331 disconnected until the interface is reviewed.
+This directory contains the synthesizable pulse-window counter, its self-checking testbench, and a thin PYNQ-Z2 wrapper. Separate timestamp-FIFO/AXI-Lite RTL and a passing XSim testbench are also present as development work; they are not integrated with the wrapper or a Zynq PS block design, and have no physical validation. There are no board pin constraints. The pulse input is not electrically verified; keep the LM331 disconnected until the interface is reviewed.
 
 ## Architecture and status
 
@@ -12,7 +12,7 @@ This directory contains the synthesizable pulse-window counter, its self-checkin
 | Counter testbench | Implemented; reset, empty/multiple pulses, boundary behavior and snapshot strobe checks. |
 | Vivado 2024.1 XSim | Latest saved self-checking testbench run passed. See [`simulation/README.md`](simulation/README.md). |
 | PYNQ-Z2 wrapper | `xvlog` compiled it successfully; no wrapper testbench or wrapper simulation has been run. |
-| Timestamp FIFO and AXI-Lite | RTL/testbench source exists separately; latest recorded XSim attempt failed during generated C compilation. No pass is claimed and it is not integrated into the wrapper/project. |
+| Timestamp FIFO and AXI-Lite | Separate RTL/testbench passes Vivado 2024.1 XSim; it is not integrated into the wrapper/project or tested on a board. |
 | Board project / synthesis / bitstream / physical test | Not performed. No hardware validation claim. |
 | Integrated PS/software data path | Not implemented or verified. The separate FIFO module is development source only; neither it nor current counter snapshots are available to PYNQ Python through a verified overlay. |
 

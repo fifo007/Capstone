@@ -31,12 +31,12 @@ The `0–1 V` potentiometer span is the intended experiment input range, not a c
 |---|---|---|
 | Potentiometer | Set the analog test voltage over the intended range. | Planned bench source; no new measurement is recorded here. |
 | LM331 voltage-to-frequency converter | Encode the analog input as a pulse frequency. Calibration should relate measured voltage and pulse frequency. | Circuit and output topology have not been verified. |
-| PYNQ-Z2 PL | Synchronize/count pulses per window in the original counter; a separate development module captures pulse timestamps into an AXI-Lite FIFO. | Counter testbench passed in XSim. Wrapper compiled with `xvlog`. The timestamp FIFO and testbench are present but the most recent XSim attempt failed during generated C compilation. Neither design is integrated into a Vivado block design, synthesized, or physically tested. |
+| PYNQ-Z2 PL | Synchronize/count pulses per window in the original counter; a separate module captures pulse timestamps into an AXI-Lite FIFO. | Counter and FIFO testbenches pass in Vivado 2024.1 XSim. The wrapper compiled with `xvlog`, but has no wrapper simulation testbench. The FIFO and wrapper are not integrated into a Vivado block design, synthesized, or physically tested. |
 | Zynq ARM PS | Run Linux/PYNQ Python and read PL event records through a defined memory-mapped interface. | A Python MMIO reader is present, but no integrated overlay/bitstream or board boot/version check is available. It has not been validated against physical PL hardware. |
 | Fly-inspired event model | Consume timestamped pulse windows through a ME_L network adapter and produce a 6-bit result. | A hardware-free synthetic pipeline is implemented and runs against the saved FlyWire tables. Its 26 software tests pass. A fresh 64-sample synthetic sweep reported 0.125 LSB held-out MAE. The input boundary is L1 because the ME_L source network has no R1-6 node. No measured LM331 calibration or hardware-driven result exists. |
 | 6-bit output | Present the model's output to a selected downstream system. | Output electrical/protocol interface is undecided and unimplemented. |
 
-The original `pulse_counter` measures synchronized rising edges per window; it does **not** timestamp each pulse. The separate `pulse_event_fifo_axi` module is a development implementation of a timestamp FIFO and AXI-Lite register interface, but it is not connected to `pynq_z2_pulse_wrapper` or a PS block design and its testbench has no recorded pass. The Python reader reflects that register map but has not been validated on a board. Treat this path as unverified development work, not a usable hardware interface.
+The original `pulse_counter` measures synchronized rising edges per window; it does **not** timestamp each pulse. The separate `pulse_event_fifo_axi` module implements a timestamp FIFO and AXI-Lite register interface, and its self-checking XSim testbench passes. It is not connected to `pynq_z2_pulse_wrapper` or a PS block design, and the Python reader has not been validated on a board. Treat it as simulation-verified development RTL, not a usable physical hardware interface.
 
 ## PL, PS and development tools
 
@@ -67,7 +67,7 @@ The existing BioWire notebook, saved decoder and EXP-56B data are voltage-derive
 | `hardware/vivado/README.md` | Vivado setup guidance for the PYNQ-Z2 board, PS clock/reset and wrapper integration. |
 | `software/event_model/` | Implemented hardware-free event-window CSV types, ME_L connectome builder, Brian2 network adapter, neural-feature decoder, calibration/inference CLI, and PYNQ MMIO reader. Hardware-to-model integration and a final physical 6-bit output interface remain unvalidated. |
 | `hardware/rtl/pulse_event_fifo_axi.v` | Separate timestamp FIFO/AXI-Lite development module; not integrated with the pulse-counter wrapper and not simulation-verified. |
-| `hardware/testbench/pulse_event_fifo_axi_tb.v` | Self-checking testbench source for the timestamp FIFO; most recent XSim attempt failed during generated C compilation, so no pass is claimed. |
+| `hardware/testbench/pulse_event_fifo_axi_tb.v` | Self-checking testbench for FIFO register access, channel ordering, timestamp order, overflow, draining and reset; passes Vivado 2024.1 XSim. |
 | `docs/codex_audit.md` | Earlier repository reconnaissance record. It is historical and predates the hardware implementation. |
 | `docs/PROJECT_ARCHITECTURE.md` | This architecture and status document. |
 | `docs/CAMPUS_HARDWARE_CHECKLIST.md` | Lab visit checklist. |
@@ -87,7 +87,7 @@ The repository also contains Python cache material and Git metadata; neither is 
 | Board boot / PYNQ image | Not verified. |
 | Synthesis / implementation / bitstream | Not performed. |
 | Physical pulse capture / LM331 | Not performed; no signal connection authorized by this design note. |
-| Timestamp FIFO / AXI-Lite module | RTL and testbench source present; testbench did not complete in the latest recorded attempt; no block-design integration. |
+| Timestamp FIFO / AXI-Lite module | RTL/testbench simulation passes in XSim; not integrated in a PS block design, synthesized, or physically verified. |
 | Software event model / MMIO reader | Hardware-free synthetic demo, labeled-window calibration path, stored-window inference path, compact connectome bundle, and MMIO reader are implemented. All 26 software tests pass, and the full synthetic demo and synthetic-only calibration CLI passed again during this work. The MMIO reader has not been tested against a real overlay. |
 | Six-bit output | Not implemented; electrical/protocol interface undecided. |
 
@@ -103,7 +103,7 @@ The repository also contains Python cache material and Git metadata; neither is 
 8. How will the final 6-bit value be presented, and what hardware/electrical protocol does that downstream device require?
 9. What calibration method, voltage sweep, repeat count and validation split should be used before comparing hardware-driven results with the saved BioWire work?
 
-No board-specific pin assignment, integrated AXI block design, analog interface design, or hardware validation is provided in this document. The separate AXI-Lite FIFO source is unverified development code and is not approved for deployment.
+No board-specific pin assignment, integrated AXI block design, analog interface design, or hardware validation is provided in this document. The separate AXI-Lite FIFO RTL and testbench pass simulation, but the design is not integrated with a PS block design or approved for deployment.
 
 ## Ordered next steps
 
